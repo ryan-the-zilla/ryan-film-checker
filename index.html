@@ -65,7 +65,7 @@ button.secondary:hover { background:#333; }
 </head>
 <body>
 <h1>🎬 Mindfuck Checker</h1>
-<p class="sub">Klik = gezien · Dubbelklik = wil zien · Rechts = reset</p>
+<p class="sub">Klik = cycle (gezien → wil zien → reset) · Rechts = direct reset</p>
 <div class="legend">
   <div class="legend-item"><div class="legend-dot" style="background:#333"></div> Niet gezien</div>
   <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div> Gezien</div>
@@ -119,16 +119,25 @@ function render() {
         <span class="badge ${film.type==='series'?'badge-series':'badge-film'}">${film.type==='series'?'SERIES':'FILM'}</span>
       </div>
     `;
-    card.addEventListener('click', () => toggle(card, film.title, 'seen'));
-    card.addEventListener('dblclick', (e) => { e.preventDefault(); toggle(card, film.title, 'want'); });
-    card.addEventListener('contextmenu', (e) => { e.preventDefault(); toggle(card, film.title, null); });
+    card.addEventListener('click', () => cycleState(film.title));
+    card.addEventListener('contextmenu', (e) => { e.preventDefault(); toggle(film.title, null); });
     grid.appendChild(card);
   });
 }
 
-function toggle(card, title, newState) {
-  if (state[title] === newState) newState = null;
-  state[title] = newState;
+function cycleState(title) {
+  const current = state[title];
+  if (!current) state[title] = 'seen';
+  else if (current === 'seen') state[title] = 'want';
+  else delete state[title];
+  saveState(state);
+  render();
+  updateStats();
+}
+
+function toggle(title, newState) {
+  if (newState === null) delete state[title];
+  else state[title] = newState;
   saveState(state);
   render();
   updateStats();
